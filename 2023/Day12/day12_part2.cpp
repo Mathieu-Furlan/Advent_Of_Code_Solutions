@@ -4,78 +4,47 @@
 #include <vector>
 #include <algorithm>
 
-int recursiveRes{0};
-
-void findArrangements(std::string stateSprings, int index, std::vector<int>& aggregate, int maxDamaged, int currentlyDamaged){
-    if(index == stateSprings.length()){
-        bool meetRequirements{true};
-        int succesive{0};
-        int ind{0};
-        for(auto& character : stateSprings){
-            if(character == '#'){
-                succesive++;
-            }
-            else if(succesive > 0){
-                if(succesive == aggregate[ind]){
-                    ind++;
-                    succesive = 0;
-                }
-                else{
-                    meetRequirements = false;
-                    break;
-                }
-            }
-        }
-        if(succesive > 0){                      // si il reste un élément à comparer
-            if(succesive != aggregate[ind]){
-                meetRequirements = false;
-            }
-            ind++;
-        }
-        if(ind < aggregate.size()){         // si il y a le nombre suffisant d'élément
-            meetRequirements = false;
-        }
-        if(meetRequirements){
-            recursiveRes++;
-        }
-        return;
+long findArrangements(std::string& stateSprings, int index, std::vector<int>& aggregate, int indexAggreg, int maxDamaged, int currentlyDamaged, int aggregateDamaged, int previousDamaged, std::vector<std::vector<std::vector<long>>>& memory){
+    if(memory[index][currentlyDamaged][previousDamaged] > -1){
+        return memory[index][currentlyDamaged][previousDamaged];
     }
-    if(stateSprings[index] == '?'){
-        if(currentlyDamaged < maxDamaged){              // on teste d'abord avec "#" si c'est possible
-            stateSprings[index] = '#';
-            findArrangements(stateSprings, index + 1, aggregate, maxDamaged, currentlyDamaged + 1);
+    if(indexAggreg < aggregate.size() && aggregateDamaged == aggregate[indexAggreg]){
+        indexAggreg++;
+        aggregateDamaged = 0;
+    }
+    if(index == stateSprings.length()){
+        if(indexAggreg == aggregate.size()){
+            return 1;
         }
-        stateSprings[index] = '.';                      // on essaie ensuite avec "."
-        findArrangements(stateSprings, index + 1, aggregate, maxDamaged, currentlyDamaged);
+        else return 0;
+    }
+    long res{0};
+    if(stateSprings[index] == '?'){
+        if(currentlyDamaged < maxDamaged && indexAggreg < aggregate.size() && !(aggregateDamaged == 0 && previousDamaged)){              // on teste d'abord avec "#" si c'est possible
+            res += findArrangements(stateSprings, index + 1, aggregate, indexAggreg, maxDamaged, currentlyDamaged + 1, aggregateDamaged + 1, 1, memory);
+        }
+        if(aggregateDamaged == 0){                  // on essaie ensuite avec "."
+            res += findArrangements(stateSprings, index + 1, aggregate, indexAggreg, maxDamaged, currentlyDamaged, aggregateDamaged, 0, memory);
+        }
     }
     else if(stateSprings[index] == '#'){
-        if(currentlyDamaged < maxDamaged){              // si on peut encore ajouter un "#"
-            findArrangements(stateSprings, index + 1, aggregate, maxDamaged, currentlyDamaged + 1);
+        if(currentlyDamaged < maxDamaged && indexAggreg < aggregate.size() && !(aggregateDamaged == 0 && previousDamaged)){              // si on peut encore ajouter un "#"
+            res += findArrangements(stateSprings, index + 1, aggregate, indexAggreg, maxDamaged, currentlyDamaged + 1, aggregateDamaged + 1, 1, memory);
         }
     }
-    else findArrangements(stateSprings, index + 1, aggregate, maxDamaged, currentlyDamaged);  // si c'est un "."
+    else if(aggregateDamaged == 0){
+        res += findArrangements(stateSprings, index + 1, aggregate, indexAggreg, maxDamaged, currentlyDamaged, aggregateDamaged, 0, memory);  // si c'est un "."
+    }
+    memory[index][currentlyDamaged][previousDamaged] = res;
+    return res;
 }
 
 int main(){
-    std::ifstream file("inputtest");
+    std::ifstream file("input");
     std::string s;
-    long res{0};
+    long final{0};
     while(getline(file, s)){
-        bool useSpring{false};
         std::string springs{s.substr(0, s.find(' '))};
-        std::string additionalSprings{springs[springs.length() - 1] == '#' ? springs : '?' + springs};
-        if(springs[springs.length() - 1] == '?'){
-            int deleteCount{0};
-            for(int i = 0; i <= additionalSprings.length() - 1; i++){
-                if(additionalSprings[i] == '?'){
-                    springs += additionalSprings[i];
-                    deleteCount++;
-                }
-                else break;
-            }
-            additionalSprings = additionalSprings.substr(deleteCount);
-            useSpring = true;
-        }
         std::string value;
         std::vector<int> contiguous;
         int unknownDamaged{0};                  // le nombre maximum de "#" est égal à la somme des éléments du vecteur 
@@ -90,27 +59,33 @@ int main(){
             }
         }
         contiguous.push_back(std::stoi(value));
+        unsigned long contiguousSize{contiguous.size()};
+        std::string springCopy{springs};
+        for(int i = 1; i < 5; i++){
+            springs += '?' + springCopy;
+            for(int j = 0; j < contiguousSize; j++){
+                contiguous.push_back(contiguous[j]);
+            }
+        }
         unknownDamaged += std::stoi(value);
+        unknownDamaged *= 5;
         std::cout << springs << " ";
-        std::cout << additionalSprings << " ";
         for(auto& elem : contiguous){
             std::cout << elem << " ";
         }
         std::cout << "\n";
-        findArrangements(springs, 0, contiguous, unknownDamaged, 0);
-        int firstPart{recursiveRes};
-        recursiveRes = 0;
-        findArrangements(additionalSprings, 0, contiguous, unknownDamaged, 0);
-        int secondPart{recursiveRes};
-        recursiveRes = 0;
-        std::cout << "firstPart " << firstPart << "\n";
-        std::cout << "secondPart " << secondPart << "\n";
-        if(useSpring){
-            res += secondPart * firstPart * firstPart * firstPart * firstPart;
+        std::vector<std::vector<std::vector<long>>> mem;
+        for(int i = 0; i <= springs.length(); i++){
+            std::vector<std::vector<long>> matrixCells;
+            for(int j = 0; j <= unknownDamaged; j++){
+                std::vector<long> init{-1, -1};
+                matrixCells.push_back(init);
+            }
+            mem.push_back(matrixCells);
         }
-        else res += secondPart * secondPart * secondPart * secondPart * firstPart;
-        std::cout << res << "\n";
+        final += findArrangements(springs, 0, contiguous, 0, unknownDamaged, 0, 0, 0, mem);
+        std::cout << "res " << final << "\n";
     }
-    std::cout << res << "\n";
+    std::cout << "res " << final << "\n";
     return 0;
 }

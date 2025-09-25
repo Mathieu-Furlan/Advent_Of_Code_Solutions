@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("inputtest2");
     std::string s;
     std::vector<long> listCode;
     std::string value;

@@ -32,28 +32,28 @@ int excavateGeodes(int minutes, int ore, int oreRobots, int oreRobCost, int clay
     else if(prevBuilt == 4){
         geode--;
     }
-    if(minutes == 24){
+    if(minutes == 32){
         return geode;
     }
     int choice1{0};
     int choice2{0};
     int choice3{0};
     int choice4{0};
-    if(minutes < 23){
-        if(oreRobots < oreMax && minutes + fastForward1 + 1 <= 24){
+    if(minutes < 31){
+        if(oreRobots < oreMax && minutes + fastForward1 + 1 <= 32){
             choice1 = excavateGeodes(minutes + fastForward1 + 1, ore + oreRobots * fastForward1 - oreRobCost, oreRobots + 1, oreRobCost, clay + clayRobots * fastForward1, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward1, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward1, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax, 1);
         }
-        if(clayRobots < clayMax && minutes < 22 && minutes + fastForward2 + 1 <= 24){
+        if(clayRobots < clayMax && minutes < 30 && minutes + fastForward2 + 1 <= 32){
             choice2 = excavateGeodes(minutes + fastForward2 + 1, ore + oreRobots * fastForward2 - clayRobCost, oreRobots, oreRobCost, clay + clayRobots * fastForward2, clayRobots + 1, clayRobCost, obsidian + obsidianRobots * fastForward2, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward2, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax, 2);
         }
-        if(clayRobots > 0 && obsidianRobots < obsidianMax && minutes + fastForward3 + 1 <= 24){
+        if(clayRobots > 0 && obsidianRobots < obsidianMax && minutes + fastForward3 + 1 <= 32){
             choice3 = excavateGeodes(minutes + fastForward3 + 1, ore + oreRobots * fastForward3 - obsidianRobCost[0], oreRobots, oreRobCost, clay + clayRobots * fastForward3 - obsidianRobCost[1], clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward3, obsidianRobCost, obsidianRobots + 1, geode + geodeRobots * fastForward3, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax, 3);
         }
     }
-    if(obsidianRobots > 0 && minutes + fastForward4 + 1 <= 24){
+    if(obsidianRobots > 0 && minutes + fastForward4 + 1 <= 32){
         choice4 = excavateGeodes(minutes + fastForward4 + 1, ore + oreRobots * fastForward4 - geodeRobCost[0], oreRobots, oreRobCost, clay + clayRobots * fastForward4, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward4 - geodeRobCost[1], obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward4, geodeRobots + 1, geodeRobCost, oreMax, clayMax, obsidianMax, 4);
     }
-    int fastForward{24 - minutes};
+    int fastForward{32 - minutes};
     int choice5{excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward, oreRobots, oreRobCost, clay + clayRobots * fastForward, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax, 0)};
     return std::max(choice5, std::max(choice4, std::max(choice3, std::max(choice1, choice2))));
 }

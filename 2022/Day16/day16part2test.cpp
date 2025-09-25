@@ -41,7 +41,7 @@ void followPaths(double minutes, std::string currentValve, std::string otherValv
 }
 
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("inputtest");
     std::string s;
     std::unordered_map<std::string, int> pressure;
     std::unordered_map<std::string, std::unordered_map<std::string, int>> pathsTo;
