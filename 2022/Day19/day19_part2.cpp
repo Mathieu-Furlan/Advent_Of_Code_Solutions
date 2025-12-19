@@ -3,54 +3,43 @@
 #include <iostream>
 #include <array>
 #include <algorithm>
-#include <cmath>
 
-int excavateGeodes(int minutes, int ore, int oreRobots, int oreRobCost, int clay, int clayRobots, int clayRobCost, int obsidian, std::array<int, 2>& obsidianRobCost, int obsidianRobots, int geode, int geodeRobots, std::array<int, 2>& geodeRobCost, int oreMax, int clayMax, int obsidianMax){
-    if(minutes == 25){
-        return geode;
+int highestNumberGeodes{0};
+const int TIME_LIMIT{32};
+
+void excavateGeodes(int minutes, int ore, int oreRobots, int oreRobCost, int clay, int clayRobots, int clayRobCost, int obsidian, std::array<int, 2>& obsidianRobCost, int obsidianRobots, int geode, std::array<int, 2>& geodeRobCost, int oreMax, int clayMax, int obsidianMax){
+    if(minutes == TIME_LIMIT){
+        highestNumberGeodes = std::max(highestNumberGeodes, geode);
+        return;
     }
-    int choice1{0};
-    int choice2{0};
-    int choice3{0};
-    int choice4{0};
-    if(minutes < 23){
-        if(oreRobots < oreMax){
-            double fastForward{std::ceil((oreRobCost - ore) / oreRobots)};
-            if(minutes + fastForward <= 23){
-                choice1 = excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward - oreRobCost, oreRobots + 1, oreRobCost, clay + clayRobots * fastForward - 1 * clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward - 1 * obsidianRobots, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward - 1 * geodeRobots, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax);
-            }
+    if(geode + ((TIME_LIMIT - minutes + 1) * (TIME_LIMIT - minutes)) / 2 <= highestNumberGeodes){       // si on sait qu'on en pourra pas faire mieux que le meilleur résultat jusqu'à présent
+        return;
+    } 
+    if(minutes < TIME_LIMIT - 1){                                   // un robot créé la dernière minute n'a aucun intérêt
+        if(ore >= oreRobCost && oreRobots < oreMax){
+            excavateGeodes(minutes + 1, ore - oreRobCost + oreRobots, oreRobots + 1, oreRobCost, clay + clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots, obsidianRobCost, obsidianRobots, geode, geodeRobCost, oreMax, clayMax, obsidianMax);
         }
-        if(clayRobots < clayMax && minutes < 22){
-            double fastForward{std::ceil((clayRobCost - ore) / oreRobots)};
-            if(minutes + fastForward <= 22){
-                choice2 = excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward - clayRobCost, oreRobots, oreRobCost, clay + clayRobots * fastForward - 1 * clayRobots, clayRobots + 1, clayRobCost, obsidian + obsidianRobots * fastForward - 1 * obsidianRobots, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward - 1 * geodeRobots, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax);
-            }
+        if(ore >= clayRobCost && clayRobots < clayMax && minutes < TIME_LIMIT - 2){   // minutes < time limite - 2 car il faut ensuite 1 minute pour un osidian robot et 1 minute pour geode robot
+            excavateGeodes(minutes + 1, ore - clayRobCost + oreRobots, oreRobots, oreRobCost, clay + clayRobots, clayRobots + 1, clayRobCost, obsidian + obsidianRobots, obsidianRobCost, obsidianRobots, geode, geodeRobCost, oreMax, clayMax, obsidianMax);
         }
-        if(clayRobots > 0 && obsidianRobots < obsidianMax){
-            double fastForward{std::max(std::ceil((obsidianRobCost[0] - ore) / oreRobots), std::ceil((obsidianRobCost[1] - clay) / clayRobots))};
-            if(minutes + fastForward <= 23){
-                choice3 = excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward - obsidianRobCost[0], oreRobots, oreRobCost, clay + clayRobots * fastForward - obsidianRobCost[1], clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward - 1 * obsidianRobots, obsidianRobCost, obsidianRobots + 1, geode + geodeRobots * fastForward - 1 * geodeRobots, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax);
-            }
+        if(ore >= obsidianRobCost[0] && clay >= obsidianRobCost[1] && obsidianRobots < obsidianMax){
+            excavateGeodes(minutes + 1, ore - obsidianRobCost[0] + oreRobots, oreRobots, oreRobCost, clay - obsidianRobCost[1] + clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots, obsidianRobCost, obsidianRobots + 1, geode, geodeRobCost, oreMax, clayMax, obsidianMax);
         }
     }
-    if(minutes < 24 && obsidianRobots > 0){
-        double fastForward{std::max(std::ceil(geodeRobCost[0] - ore / oreRobots), std::ceil(geodeRobCost[1] - obsidian / obsidianRobots))};
-        if(minutes + fastForward <= 24){
-            choice4 = excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward - geodeRobCost[0], oreRobots, oreRobCost, clay + clayRobots * fastForward - 1 * clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward - geodeRobCost[1], obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward - 1 * geodeRobots, geodeRobots + 1, geodeRobCost, oreMax, clayMax, obsidianMax);
-        }
+    if(ore >= geodeRobCost[0] && obsidian >= geodeRobCost[1]){              // on ajoute directement le nombre de géode qui seront extraites par le nouveau robot
+        excavateGeodes(minutes + 1, ore - geodeRobCost[0] + oreRobots, oreRobots, oreRobCost, clay + clayRobots, clayRobots, clayRobCost, obsidian - geodeRobCost[1] + obsidianRobots, obsidianRobCost, obsidianRobots, geode + TIME_LIMIT - minutes, geodeRobCost, oreMax, clayMax, obsidianMax);
     }
-    int fastForward{25 - minutes};
-    int choice5{excavateGeodes(minutes + fastForward, ore + oreRobots * fastForward - 1 * oreRobots, oreRobots, oreRobCost, clay + clayRobots * fastForward - 1 * clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots * fastForward - 1 * obsidianRobots, obsidianRobCost, obsidianRobots, geode + geodeRobots * fastForward - 1 * geodeRobots, geodeRobots, geodeRobCost, oreMax, clayMax, obsidianMax)};
-    return std::max(choice5, std::max(choice4, std::max(choice3, std::max(choice1, choice2))));
+    excavateGeodes(minutes + 1, ore + oreRobots, oreRobots, oreRobCost, clay + clayRobots, clayRobots, clayRobCost, obsidian + obsidianRobots, obsidianRobCost, obsidianRobots, geode, geodeRobCost, oreMax, clayMax, obsidianMax);
+    return;
 }
 
 int main(){
-    std::ifstream file("inputtest");
+    std::ifstream file("input");
     std::string s;
-    int res{0};
-    int numberOfLign{0};
-    while(getline(file, s)){
-        numberOfLign++;
+    int lineCounter{0};
+    int res{1};
+    while(getline(file, s) && lineCounter < 3){
+        lineCounter++;
         int maxOre{0};
         int maxClay{0};
         int maxObsidian{0};
@@ -80,21 +69,17 @@ int main(){
                     blueprint = false;
                 }
                 else if(oreRobot){
-                    oreRobotCost = std::stoi(val);
+                    oreRobotCost = std::stoi(val);  // maxOre ne dépend pas des ore robots car on ne les crée pas pour eux-mêmes
                     oreRobot = false;
                 }
                 else if(clayRobot){
                     clayRobotCost = std::stoi(val);
-                    if(clayRobotCost > maxOre){
-                        maxOre = clayRobotCost;
-                    }
+                    maxOre = std::max(maxOre, clayRobotCost);
                     clayRobot = false;
                 }
                 else if(obsidianRobotOre){
                     obsidianCost[0] = std::stoi(val);
-                    if(obsidianCost[0] > maxOre){
-                        maxOre = obsidianCost[0];
-                    }
+                    maxOre = std::max(maxOre, obsidianCost[0]);
                     obsidianRobotOre = false;
                 }
                 else if(obsidianRobotClay){
@@ -104,9 +89,7 @@ int main(){
                 }
                 else if(geodeRobotOre){
                     geodeCost[0] = std::stoi(val);
-                    if(geodeCost[0] > maxOre){
-                        maxOre = geodeCost[0];
-                    }
+                    maxOre = std::max(maxOre, geodeCost[0]);
                     geodeRobotOre = false;
                 }
                 else if(geodeRobotObsidian){
@@ -126,10 +109,10 @@ int main(){
         std::cout << "max ore " << maxOre << "\n";
         std::cout << "max clay " << maxClay << "\n";
         std::cout << "max obsi " << maxObsidian << "\n";
-        int quality{excavateGeodes(1, 0, 1, oreRobotCost, 0, 0, clayRobotCost, 0, obsidianCost, 0, 0, 0, geodeCost, maxOre, maxClay, maxObsidian)};
-        std::cout << "quality " << quality << "\n";
-        quality *= blueprintNumber;
-        res += quality;
+        excavateGeodes(1, 0, 1, oreRobotCost, 0, 0, clayRobotCost, 0, obsidianCost, 0, 0, geodeCost, maxOre, maxClay, maxObsidian);
+        std::cout << "quality " << highestNumberGeodes << "\n";
+        res *= highestNumberGeodes;
+        highestNumberGeodes = 0;
     }
     std::cout << res << "\n";
     return 0;

@@ -11,32 +11,31 @@
 
 int res{0};
 
-void followPaths(double minutes, std::string currentValve, std::string otherValve, double cumulatedPressure, std::unordered_map<std::string, int>& pressureMap, std::unordered_map<std::string, std::unordered_map<std::string, int>>& mazeMap, std::vector<std::string>& opened, int pressureReleased, int timeMoving, int otherMoving){
-    std::cout << "minutes " << minutes << " cumulatedPress " << cumulatedPressure << "\n";
-    if(minutes == 27){
+void followPaths(int minutes, std::string currentValve, int cumulatedPressure, std::unordered_map<std::string, int>& pressureMap, std::unordered_map<std::string, std::unordered_map<std::string, int>>& mazeMap, std::vector<std::string>& opened, int pressureReleased, int timeMoving){
+    if(minutes == 31){
         if(cumulatedPressure > res){
             res = cumulatedPressure;
         }
         return;
     }
-    cumulatedPressure += pressureReleased / 2;
+    cumulatedPressure += pressureReleased;
     if(timeMoving > 0){
         if(timeMoving == 1){                                    // on ajoute la pression supplémentaire lorsqu'il reste une minute de déplacement pour pouvoir continuer à se déplacer immédiatement après l'ouverture
             pressureReleased += pressureMap.at(currentValve);
         }
-        followPaths(minutes + 0.5, otherValve, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, otherMoving, timeMoving - 1);
+        followPaths(minutes + 1, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, timeMoving - 1);
     }
     else if(opened.size() < mazeMap.size()){
         for(auto& [key, val] : mazeMap.at(currentValve)){
             if(std::find(opened.begin(), opened.end(), key) == opened.end()){
                 opened.push_back(key);
-                followPaths(minutes + 0.5, otherValve, key, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, otherMoving, val);
+                followPaths(minutes + 1, key, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, val);
                 opened.pop_back();
             }
         }
     }
     else if(opened.size() == mazeMap.size()){                   // si on a ouvert toutes les valves
-        followPaths(minutes + 0.5, otherValve, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, 0, 0);
+        followPaths(minutes + 1, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, 0);
     }
 }
 
@@ -45,6 +44,8 @@ int main(){
     std::string s;
     std::unordered_map<std::string, int> pressure;
     std::unordered_map<std::string, std::unordered_map<std::string, int>> pathsTo;
+    int powerOfTwo{1};
+    std::unordered_map<std::string, int> corresponding power; 
     while(getline(file, s)){
         std::string valve{s.substr(6, 2)};
         std::string pathName;
@@ -70,7 +71,8 @@ int main(){
             }
         }
         if(value != "0" || valve == "AA"){              // AA est à 0 mais c'est le point de départ
-            pressure.insert(std::make_pair(valve, std::stoi(value)));
+            co
+            pressure.insert(std::make_pair(powerOfTwo, std::stoi(value)));
         }
     }
     std::queue<std::string> shortestPath;           // on utilise le BFS pour créer la hashMap des plus courts chemins
@@ -120,7 +122,7 @@ int main(){
         }
     }
     std::vector<std::string> init{"AA"};
-    followPaths(1, "AA", "AA", 0, pressure, pathsTo, init, 0, 0, 0);
+    followPaths(1, "AA", 0, pressure, pathsTo, init, 0, 0);
     std::cout << res << "\n";
     return 0;
 }
