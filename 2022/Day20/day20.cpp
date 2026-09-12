@@ -1,14 +1,12 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <unordered_map>
-#include <list>
+#include <vector>
 
 struct Node{
     int value;
-    Node* prev = nullptr;
-    Node* next = nullptr;
-    bool alreadyMoved = false;
+    Node* prev{nullptr};
+    Node* next{nullptr};
     Node(int val) : value(val){}                                  // constructor dans le cas où on ne donne qu'un seul paramètre
     Node(int val, Node* p) : value(val), prev(p){}                // constructor dans le cas où l'on donne deux paramètres
 };                                     // point-virgule après la définition
@@ -16,62 +14,63 @@ struct Node{
 int main(){
     std::ifstream file("input");
     std::string s;
-    std::list<Node> sequence;
+    std::vector<Node*> toBeMoved;
     getline(file, s);
-    Node firstNode(std::stoi(s));
-    sequence.push_back(firstNode);
-    Node* previousNode{&firstNode};
-    Node* beginningList{&firstNode};
-    Node* zeroPointer{nullptr};
+    Node* head{new Node(std::stoi(s))};
+    toBeMoved.push_back(head);
+    Node* prevNode{head};
+    Node* zeroPointer;
     while(getline(file, s)){
-        Node temp(std::stoi(s), previousNode);
-        if(temp.value == 0){
-            zeroPointer = &temp;                    //un pointer vers l'élément 0 pour le résultat final
+        Node* temp{new Node(std::stoi(s))};
+        if(temp -> value == 0){
+            zeroPointer = temp;                    //un pointer vers l'élément 0 pour le résultat final
         }
-        previousNode -> next = &temp;
-        sequence.push_back(temp);
-        previousNode = &temp;
+        temp -> prev = prevNode;
+        prevNode -> next = temp;
+        prevNode = temp;
+        toBeMoved.push_back(prevNode);
     }
-    beginningList -> prev = previousNode;            // le début et la fin de la liste se rejoignent pour former une liste circulaire
-    previousNode -> next = beginningList;
-    for(auto& n : sequence){
-        std::cout << n.value << "\n";
-        if(!n.alreadyMoved){
-            Node* movedNode{&n};
-            int movement{n.value};
-            n.prev -> next = n.next;
-            n.next -> prev = n.prev;
-            sequence.erase(sequence.begin());    // à modifier
-            if(movement > 0){
-                while(movement > 0){
-                    movedNode = movedNode -> next;
-                    movement--;
-                }
-                n.next = movedNode -> next;
-                n.prev = movedNode;
-                movedNode -> next -> prev = &n;
-                movedNode -> next = &n;
+    head -> prev = prevNode;            // le début et la fin de la liste se rejoignent pour former une liste circulaire
+    prevNode -> next = head;
+    for(int i = 0; i < toBeMoved.size(); i++){
+        int movement{toBeMoved[i] -> value};
+        if(movement > 0){
+            while(movement > 0){
+                Node* exchangeNextPointer{toBeMoved[i] -> next};
+                Node* exchangePrevPointer{toBeMoved[i] -> prev};
+                toBeMoved[i] -> prev = exchangeNextPointer;
+                toBeMoved[i] -> next = toBeMoved[i] -> next -> next;
+                exchangeNextPointer -> next -> prev = toBeMoved[i];
+                exchangePrevPointer -> next = exchangeNextPointer;
+                exchangeNextPointer -> prev = exchangePrevPointer;
+                exchangeNextPointer -> next = toBeMoved[i];
+                movement--;
             }
-            else if(movement < 0){
-                while(movement < 0){
-                    movedNode = movedNode -> prev;
-                    movement++;
-                }
-                n.next = movedNode;
-                n.prev = movedNode -> prev;
-                movedNode -> prev -> next = &n;
-                movedNode -> prev = &n;
+        }
+        else if(movement < 0){
+            while(movement < 0){
+                Node* exchangeNextPointer{toBeMoved[i] -> next};
+                Node* exchangePrevPointer{toBeMoved[i] -> prev};
+                toBeMoved[i] -> prev = toBeMoved[i] -> prev -> prev;
+                toBeMoved[i] -> next = exchangePrevPointer;
+                exchangePrevPointer -> prev -> next = toBeMoved[i];
+                exchangeNextPointer -> prev = exchangePrevPointer;
+                exchangePrevPointer -> next = exchangeNextPointer;
+                exchangePrevPointer -> prev = toBeMoved[i];
+                movement++;
             }
-            n.alreadyMoved = true;
         }
     }
     int startFromZero{0};
+    int res{0};
     while(startFromZero < 3000){
         startFromZero++;
         zeroPointer = zeroPointer -> next;
         if(startFromZero == 1000 || startFromZero == 2000 || startFromZero == 3000){
             std::cout << zeroPointer -> value << "\n";
+            res += zeroPointer -> value;
         }
     }
+    std::cout << res << "\n";
     return 0;
 }

@@ -3,15 +3,17 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <cctype>
 
-std::string zeroVal(int rule, std::unordered_map<int, std::string>& equival, std::unordered_map<int, std::vector<std::string>>& rulesBinder){
+std::string zeroVal(int rule, std::unordered_map<int, std::vector<std::string>>& rulesBinder){
     std::cout << rule << "\n";
-    if(equival.find(rule) != equival.end()){
-        return equival.at(rule);
+    std::vector<std::string> rulesSet{rulesBinder.at(rule)};
+    if(rulesSet.size() == 1 && std::isalpha(rulesSet[0][0])){            // si une règle correspond directement à une lettre
+        return rulesSet[0];
     }
     std::string equivalent;
     int rulesCounter{0};
-    for(auto& ruleLabels : rulesBinder.at(rule)){
+    for(auto& ruleLabels : rulesSet){
         if(rulesCounter){
             equivalent += ' ';
         }
@@ -23,10 +25,10 @@ std::string zeroVal(int rule, std::unordered_map<int, std::string>& equival, std
             }
         }
         if(separator){
-            equivalent += zeroVal(std::stoi(ruleLabels.substr(0, separator)), equival, rulesBinder);
-            equivalent += zeroVal(std::stoi(ruleLabels.substr(separator + 1)), equival, rulesBinder);
+            equivalent += zeroVal(std::stoi(ruleLabels.substr(0, separator)), rulesBinder);
+            equivalent += zeroVal(std::stoi(ruleLabels.substr(separator + 1)), rulesBinder);
         }
-        else equivalent += zeroVal(std::stoi(ruleLabels), equival, rulesBinder);
+        else equivalent += zeroVal(std::stoi(ruleLabels), rulesBinder);
         rulesCounter++;
     }
     std::cout << "equivalent: " << equivalent << "\n";
@@ -36,7 +38,6 @@ std::string zeroVal(int rule, std::unordered_map<int, std::string>& equival, std
 int main(){
     std::ifstream file("inputtest");
     std::string s;
-    std::unordered_map<int, std::string> equivalences;
     std::unordered_map<int, std::vector<std::string>> rules;
     std::vector<std::string> candidates;
     while(getline(file, s)){
@@ -49,14 +50,14 @@ int main(){
             }
             index += 2;
             int rule{std::stoi(ruleNumb)};
-            std::vector<std::string> rulesCollector;
             for(int i = index; i < s.length(); i++){
                 if(s[i] == '"'){
                     std::string init{s[i + 1]};
-                    equivalences.insert(std::make_pair(rule, init));
+                    rules.insert(std::make_pair(rule, std::vector<std::string>{init}));
                     break;
                 }
-                else if(s[i] == '|'){
+                std::vector<std::string> rulesCollector;
+                if(s[i] == '|'){
                     rulesCollector.push_back(s.substr(index, i - index - 1));
                     index = i + 2;
                 }
@@ -75,10 +76,7 @@ int main(){
         }
         std::cout << "\n";
     }
-    for(auto& [key, val] : equivalences){
-        std::cout << key << ": " << val << "\n";
-    }
-    std::string res{zeroVal(0, equivalences, rules)};
+    std::string res{zeroVal(0, rules)};
     std::cout << res << "\n";
     return 0;
 }

@@ -28,19 +28,33 @@ int main(){
     }
     std::cout << res << "\n";
     std::string snafuRes;
-    long startingPower{1};
-    while(startingPower * 2 < res){
-        startingPower *= 5;
-    }
-    while(startingPower > 1){
-        if(res > startingPower){
-            snafuRes += '2';
-            res -= startingPower * 2;
-            startingPower /= 5;
+    long powerOfFive{1};
+    long nextPowerOfFive{5};
+    long currentValue{0};
+    while(currentValue != res){
+        long modulo{(res % nextPowerOfFive - currentValue) / powerOfFive};          // formule basée sur une approche consistant à essayer et à apprendre des erreurs
+        if(modulo == 0 || modulo == 5){
+            snafuRes = '0' + snafuRes;
         }
-        else if(res <= startingPower && res > 0){
-            
+        else if(modulo == 1){
+            snafuRes = '1' + snafuRes;
+            currentValue += powerOfFive;
         }
+        else if(modulo == 2){
+            snafuRes = '2' + snafuRes;
+            currentValue += powerOfFive * 2;
+        }
+        else if(modulo == 3){
+            snafuRes = '=' + snafuRes;
+            currentValue -= powerOfFive * 2;
+        }
+        else if(modulo == 4){
+            snafuRes = '-' + snafuRes;
+            currentValue -= powerOfFive;
+        }
+        powerOfFive = nextPowerOfFive;
+        nextPowerOfFive *= 5;
     }
-    return res;
+    std::cout << snafuRes << "\n";
+    return 0;
 }

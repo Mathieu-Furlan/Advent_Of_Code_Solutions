@@ -11,10 +11,11 @@
 // il doivent forcément venir de directions opposées
 
 int main(){
-    const int ROUNDS{10};
+    int rounds{0};
     std::ifstream file("input");
     std::string s;
     std::unordered_map<int, std::unordered_set<int>> grid;
+    int numberOfElves{0};
     int rowNumber{0};
     while(getline(file, s)){
         for(int i = 0; i < s.length(); i++){
@@ -23,12 +24,16 @@ int main(){
                     grid.at(rowNumber).insert(i);
                 }
                 else grid.insert(std::make_pair(rowNumber, std::unordered_set<int>{i}));
+                numberOfElves++;
             }
         }
         rowNumber++;
     }
     int directionIndex{0};
-    for(int i = 0; i < ROUNDS; i++){
+    bool moving{true};
+    while(moving){
+        rounds++;
+        int numberOfElvesNotMoving{0};
         std::unordered_map<int, std::unordered_set<int>> considerMoving;
         for(auto& [row, col] : grid){
             for(auto& elfCol : col){
@@ -144,48 +149,25 @@ int main(){
                             considerMoving.at(row).insert(elfCol);
                         }
                         else considerMoving.insert(std::make_pair(row, std::unordered_set<int>{elfCol}));
+                        numberOfElvesNotMoving++;
                     }
                 }
                 else if(considerMoving.find(row) != considerMoving.end()){
                     considerMoving.at(row).insert(elfCol);
+                    numberOfElvesNotMoving++;
                 }
-                else considerMoving.insert(std::make_pair(row, std::unordered_set<int>{elfCol}));
+                else{
+                    considerMoving.insert(std::make_pair(row, std::unordered_set<int>{elfCol}));
+                    numberOfElvesNotMoving++;
+                }
             }
         }
         directionIndex = (directionIndex + 1) % 4;
         grid = considerMoving;
-        for(auto& [key, val] : considerMoving){
-            std::cout << "row " << key << "\n";
-            for(auto& col : val){
-                std::cout << col << " ";
-            }
-        std::cout << "\n";
+        if(numberOfElvesNotMoving == numberOfElves){
+            moving = false;
         }
-        std::cout << "end print" << "\n";
     }
-    int minRow{10000};
-    int maxRow{-10000};
-    int minCol{10000};
-    int maxCol{-10000};
-    int occupiedTiles{0};
-    std::cout << "last print" << "\n";
-    for(auto& [key, val] : grid){
-        std::cout << "row " << key << "\n";
-        maxRow = std::max(key, maxRow);
-        minRow = std::min(key, minRow);
-        for(auto& col : val){
-            std::cout << col << " ";
-            maxCol = std::max(col, maxCol);
-            minCol = std::min(col, minCol);
-            occupiedTiles++;
-        }
-        std::cout << "\n";
-    }
-    std::cout << "minRow " << minRow << "\n";
-    std::cout << "maxRow " << maxRow << "\n";
-    std::cout << "minCol " << minCol << "\n";
-    std::cout << "maxCol " << maxCol << "\n";
-    int res{(maxRow - minRow + 1) * (maxCol - minCol + 1) - occupiedTiles};   // +1 car la colonne et la ligne 0 comptent
-    std::cout << res << "\n";
+    std::cout << rounds << "\n";
     return 0;
 }

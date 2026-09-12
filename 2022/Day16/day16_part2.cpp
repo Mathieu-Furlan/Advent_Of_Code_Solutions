@@ -11,76 +11,40 @@
 
 int res{0};
 
-void followPaths(int minutes, std::string currentValve, int cumulatedPressure, std::unordered_map<std::string, int>& pressureMap, std::unordered_map<std::string, std::unordered_map<std::string, int>>& mazeMap, std::vector<std::string>& opened, int pressureReleased, int timeMoving, int elephantMoving, std::string elephantValve){
-    std::cout << "minutes " << minutes << " cumulatedPress " << cumulatedPressure << "\n";
+void followPaths(int minutes, int currentValve, int cumulatedPressure, std::unordered_map<int, int>& pressureMap, std::unordered_map<int, std::unordered_map<int, int>>& mazeMap, int opened, int pressureReleased, int timeMoving){
     if(minutes == 27){
-        if(cumulatedPressure > res){
-            res = cumulatedPressure;
-        }
+        res = std::max(res, cumulatedPressure);
         return;
     }
     cumulatedPressure += pressureReleased;
-    bool humanMove{true};
     if(timeMoving > 0){
         if(timeMoving == 1){                                    // on ajoute la pression supplémentaire lorsqu'il reste une minute de déplacement pour pouvoir continuer à se déplacer immédiatement après l'ouverture
             pressureReleased += pressureMap.at(currentValve);
         }
-        timeMoving--;
-        humanMove = false;
+        followPaths(minutes + 1, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, timeMoving - 1);
     }
-    bool elephantMove{true};
-    if(elephantMoving > 0){
-        if(elephantMoving == 1){                                    // on ajoute la pression supplémentaire lorsqu'il reste une minute de déplacement pour pouvoir continuer à se déplacer immédiatement après l'ouverture
-            pressureReleased += pressureMap.at(elephantValve);
-        }
-        elephantMoving--;
-        elephantMove = false;
-    }
-    std::string nextValveHuman{currentValve};
-    int travelHuman{0};
-    std::string nextValveElephant{elephantValve};
-    int travelElephant{0};
-    if(opened.size() < mazeMap.size()){
-        if(humanMove){
-            for(auto& [key, val] : mazeMap.at(currentValve)){
-                if(std::find(opened.begin(), opened.end(), key) == opened.end()){
-                    opened.push_back(key);
-                    std::cout << "human " << key << "\n";
-                    nextValveHuman = key;
-                    travelHuman = val;
-                    break;
-                }
+    else if(opened < 65534){                                // 65534 car il y a 15 valves qui génèrent de la pression plus AA
+        for(auto& [key, val] : mazeMap.at(currentValve)){
+            if(!(opened & key)){
+                int nextOpen{opened | key};
+                followPaths(minutes + 1, key, cumulatedPressure, pressureMap, mazeMap, nextOpen, pressureReleased, val);
             }
         }
-        if(elephantMove && opened.size() < mazeMap.size()){
-            for(auto& [key, val] : mazeMap.at(elephantValve)){
-                if(std::find(opened.begin(), opened.end(), key) == opened.end()){
-                    opened.push_back(key);
-                    std::cout << "eleph " << key << "\n";
-                    nextValveElephant = key;
-                    travelElephant = val;
-                    break;
-                }
-            }
-        }
-        followPaths(minutes + 1, nextValveHuman, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, travelHuman, travelElephant, nextValveElephant);
-        if(humanMove){
-            opened.pop_back();
-        }
-        if(elephantMove){
-            opened.pop_back();
-        }
     }
-    else if(opened.size() == mazeMap.size()){                   // si on a ouvert toutes les valves
-        followPaths(minutes + 1, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, 0, 0, elephantValve);
+    else if(opened == 65534){                   // si on a ouvert toutes les valves
+        followPaths(minutes + 1, currentValve, cumulatedPressure, pressureMap, mazeMap, opened, pressureReleased, 0);
     }
 }
 
 int main(){
-    std::ifstream file("inputtest");
+    std::ifstream file("input");
     std::string s;
     std::unordered_map<std::string, int> pressure;
     std::unordered_map<std::string, std::unordered_map<std::string, int>> pathsTo;
+    std::unordered_map<int, std::unordered_map<int, int>> binaryGraph;
+    std::unordered_map<int, int> binaryPressure;
+    int valveNumb{2};
+    std::unordered_map<std::string, int> binaryEquivalent;
     while(getline(file, s)){
         std::string valve{s.substr(6, 2)};
         std::string pathName;
@@ -107,8 +71,15 @@ int main(){
         }
         if(value != "0" || valve == "AA"){              // AA est à 0 mais c'est le point de départ
             pressure.insert(std::make_pair(valve, std::stoi(value)));
+            if(valve != "AA"){
+                binaryEquivalent.insert(std::make_pair(valve, valveNumb));
+                binaryPressure.insert(std::make_pair(valveNumb, std::stoi(value)));
+                valveNumb <<= 1;
+            }
         }
     }
+    binaryEquivalent.insert(std::make_pair("AA", 1));
+    binaryPressure.insert(std::make_pair(1, 0));
     std::queue<std::string> shortestPath;           // on utilise le BFS pour créer la hashMap des plus courts chemins
     for(auto& [key, val] : pathsTo){
         for(auto& [neighbor, distance] : val){
@@ -150,13 +121,24 @@ int main(){
         pathsTo.erase(deleted);
     }
     for(auto& [key, val] : pathsTo){
-        std::cout << "key " << key << "\n";
+        binaryGraph.insert(std::make_pair(binaryEquivalent.at(key), std::unordered_map<int, int>{}));
         for(auto& [neighbor, distance] : val){
-            std::cout << "neighbor " << neighbor << " distance " << distance << "\n";
+            binaryGraph.at(binaryEquivalent.at(key)).insert(std::make_pair(binaryEquivalent.at(neighbor), distance));
         }
     }
-    std::vector<std::string> init{"AA"};
-    followPaths(0, "AA", 0, pressure, pathsTo, init, 0, 0, 0, "AA");
-    std::cout << res << "\n";
+    int bothPartsRes{0};
+    for(int i = 1; i <= 32768; i = i + 2){
+        int a = i;                              // les valves qu'on ne peut pas ouvrir sont considérées comme ouvertes dès le départ
+        int b = a ^ 65534;
+        b |= 1;
+        followPaths(1, 1, 0, binaryPressure, binaryGraph, a, 0, 0);
+        int partA{res};
+        res = 0;
+        followPaths(1, 1, 0, binaryPressure, binaryGraph, b, 0, 0);
+        int partB{res};
+        res = 0;
+        bothPartsRes = std::max(bothPartsRes, partA + partB);       // on effectue deux fois la recherche indépendamment l'une de l'autre
+    }
+    std::cout << bothPartsRes << "\n";
     return 0;
 }

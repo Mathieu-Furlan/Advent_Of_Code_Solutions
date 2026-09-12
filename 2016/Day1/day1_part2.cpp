@@ -2,14 +2,15 @@
 #include <string>
 #include <iostream>
 #include <cmath>
-#include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 int main(){
-    std::ifstream file("inputTest");
+    std::ifstream file("input");
     std::string s;
+    std::unordered_set<std::string> visited;
+    bool found{false};
     getline(file, s);
-    std::unordered_map<int, std::unordered_set<int>> coordinates;
     int horizontal{0};
     int vertical{0};
     int facingDir{0};                               // 0 nord, 3 est, 6 sud, 9 ouest
@@ -23,31 +24,56 @@ int main(){
             }
             int blocks{std::stoi(number)};
             if(facingDir == 0){
-                horizontal += blocks;
+                while(blocks > 0){
+                    blocks--;
+                    horizontal++;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 3;
             }
             else if(facingDir == 3){
-                vertical -= blocks;
+                while(blocks > 0){
+                    blocks--;
+                    vertical--;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 6;
             }
             else if(facingDir == 6){
-                horizontal -= blocks;
+                while(blocks > 0){
+                    blocks--;
+                    horizontal--;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 9;
             }
             else if(facingDir == 9){
-                vertical += blocks;
-                facingDir = 0;
-            }
-            if(coordinates.find(horizontal) != coordinates.end()){
-                if(coordinates.at(horizontal).find(vertical) != coordinates.at(horizontal).end()){
-                    break;
+                while(blocks > 0){
+                    blocks--;
+                    vertical++;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
                 }
-                else coordinates.at(horizontal).insert(vertical);
-            }
-            else{
-                std::unordered_set<int> init;
-                init.insert(vertical);
-                coordinates.insert(std::make_pair(horizontal, init));
+                facingDir = 0;
             }
         }
         else if(s[i] == 'L'){
@@ -59,32 +85,60 @@ int main(){
             }
             int blocks{std::stoi(number)};
             if(facingDir == 0){
-                horizontal -= blocks;
+                while(blocks > 0){
+                    blocks--;
+                    horizontal--;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 9;
             }
             else if(facingDir == 3){
-                vertical += blocks;
+                while(blocks > 0){
+                    blocks--;
+                    vertical++;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 0;
             }
             else if(facingDir == 6){
-                horizontal += blocks;
+                while(blocks > 0){
+                    blocks--;
+                    horizontal++;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 3;
             }
             else if(facingDir == 9){
-                vertical -= blocks;
+                while(blocks > 0){
+                    blocks--;
+                    vertical--;
+                    std::string coordinates{std::to_string(horizontal) + ',' + std::to_string(vertical)};
+                    if(std::find(visited.begin(), visited.end(), coordinates) != visited.end()){
+                        found = true;
+                        break;
+                    }
+                    visited.insert(coordinates);
+                }
                 facingDir = 6;
             }
-            if(coordinates.find(horizontal) != coordinates.end()){
-                if(coordinates.at(horizontal).find(vertical) != coordinates.at(horizontal).end()){
-                    break;
-                }
-                else coordinates.at(horizontal).insert(vertical);
-            }
-            else{
-                std::unordered_set<int> init;
-                init.insert(vertical);
-                coordinates.insert(std::make_pair(horizontal, init));
-            }
+        }
+        if(found){
+            break;
         }
     }
     int res{std::abs(horizontal) + std::abs(vertical)};
